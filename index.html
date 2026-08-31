@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nesne Havuzları — Testere Dişini Düzleştir</title>
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        background: #292524;
+        font-family: system-ui, sans-serif;
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        touch-action: none;
+      }
+      #hud {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        color: #e7e5e4;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+        line-height: 1.5;
+        text-shadow: 0 1px 2px #000;
+      }
+      #hud b {
+        color: #f472b6;
+      }
+      button {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        padding: 8px 14px;
+        border: 0;
+        border-radius: 8px;
+        background: #f472b6;
+        color: #1c1917;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      p {
+        position: fixed;
+        bottom: 10px;
+        left: 0;
+        right: 0;
+        margin: 0;
+        text-align: center;
+        color: #78716c;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <canvas id="game"></canvas>
+      <div id="hud"></div>
+      <button id="toggle">Mod: Havuzlu</button>
+      <p>Tıkla/dokun → patlama • DevTools Performance ile JS Heap'i izle</p>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
