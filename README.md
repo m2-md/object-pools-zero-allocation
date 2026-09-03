@@ -1,5 +1,9 @@
 # Object Pools and a Zero-Allocation Game Loop
 
+<!-- LINKS:BEGIN — üretildi: scripts/sync-repo-links.py · elle düzenleme -->
+**▶ [Live demo](https://m2-md.github.io/object-pools-zero-allocation/)** · [Source](https://github.com/m2-md/object-pools-zero-allocation)
+<!-- LINKS:END -->
+
 Working code for the article "Give Back the Glass, Not the Garbage: Object Pools and a
 Zero-Allocation Game Loop in Canvas". It takes the particle pattern that produces garbage
 every frame with `push({...})` + `filter` and makes it zero-allocation with a `Pool<T>` —
