@@ -1,32 +1,32 @@
-# Nesne Havuzları ve Sıfır-Ayırmalı Oyun Döngüsü
+# Object Pools and a Zero-Allocation Game Loop
 
-"Çöpü Değil, Bardağı Geri Ver: Canvas'ta Nesne Havuzları ve Sıfır-Ayırmalı Oyun
-Döngüsü" makalesinin çalışan kodu. Her karede `push({...})` + `filter` ile çöp üreten
-parçacık desenini bir `Pool<T>` ile sıfır-ayırmalı hâle getirir — ve havuzun ne zaman
-gereksiz olduğunu benchmark'la gösterir.
+Working code for the article "Give Back the Glass, Not the Garbage: Object Pools and a
+Zero-Allocation Game Loop in Canvas". It takes the particle pattern that produces garbage
+every frame with `push({...})` + `filter` and makes it zero-allocation with a `Pool<T>` —
+and uses a benchmark to show when the pool is unnecessary.
 
-Ek bağımlılık yoktur; sadece TypeScript + Vite + vitest toolchain'i.
+There are no extra dependencies; just the TypeScript + Vite + vitest toolchain.
 
-## Dosya yapısı
+## File layout
 
 ```
 src/
-  particle.ts         # Particle interface + havuzsuz spawn/update (baseline churn deseni)
-  pool.ts             # Pool<T> — acquire/release/reset, created (yüksek su seviyesi)
-  particle-system.ts  # ParticleSystem — havuzlu burst, swap-remove update
+  particle.ts         # Particle interface + unpooled spawn/update (the baseline churn pattern)
+  pool.ts             # Pool<T> — acquire/release/reset, created (high-water mark)
+  particle-system.ts  # ParticleSystem — pooled burst, swap-remove update
   vec.ts              # Vec2 + in-place addInPlace/scaleInPlace/scaleAndAdd + reflect (scratch)
-  rng.ts              # makeRng(seed) — deterministik mulberry32
+  rng.ts              # makeRng(seed) — deterministic mulberry32
   bench.ts            # benchBaseline / benchPooled + BenchResult
-  bench-cli.ts        # iki senaryoyu koşup tabloları basar (npm run bench)
-  main.ts             # Görsel demo: havuzlu/havuzsuz toggle, canlı ayırma sayacı + FPS
+  bench-cli.ts        # runs both scenarios and prints the tables (npm run bench)
+  main.ts             # Visual demo: pooled/unpooled toggle, live allocation counter + FPS
 test/
-  pool.test.ts            # 4 test: farklı acquire, LIFO geri dönüş, reset, yüksek su seviyesi
-  particle-system.test.ts # ölen parçacık iade + yeniden kullanım (allocations sabit)
-  vec.test.ts             # scaleAndAdd out referansı + değer
-index.html            # Vite giriş noktası (canvas + toggle butonu)
+  pool.test.ts            # 4 tests: distinct acquire, LIFO return, reset, high-water mark
+  particle-system.test.ts # dead particle returned + reused (allocations stay constant)
+  vec.test.ts             # scaleAndAdd out reference + value
+index.html            # Vite entry point (canvas + toggle button)
 ```
 
-## Kurulum
+## Setup
 
 ```bash
 npm install
@@ -38,10 +38,10 @@ npm install
 npm test
 ```
 
-6 test geçer: havuzun asla aynı nesneyi iki kez dağıtmadığı, LIFO ile release edileni
-geri verdiği, `reset`'in hayalet bırakmadığı, yüksek su seviyesinde `created`'ın donduğu;
-parçacık sisteminin ölen parçacığı iade edip yeni ayırma yapmadan yeniden kullandığı; ve
-`scaleAndAdd`'in yeni nesne üretmeden `out` tamponunu yerinde güncellediği.
+6 tests pass: that the pool never hands out the same object twice, that it gives back what
+was released in LIFO order, that `reset` leaves no leftover state, that `created` freezes at
+the high-water mark; that the particle system returns a dead particle and reuses it without
+a new allocation; and that `scaleAndAdd` updates the `out` buffer in place with no new object.
 
 ## Benchmark
 
@@ -49,42 +49,42 @@ parçacık sisteminin ölen parçacığı iade edip yeni ayırma yapmadan yenide
 npm run bench
 ```
 
-Havuzsuz (`push`+`filter`) ve havuzlu (`ParticleSystem`) sürümü aynı deterministik sahnede
-(tohumlu `mulberry32`) koşar. İki tablo basar. Beklenen çıktı (bu makinede ölçülen; ayırma
-ve dizi sütunları makineden bağımsız, süre oynar):
+It runs the unpooled (`push`+`filter`) and pooled (`ParticleSystem`) versions on the same
+deterministic scene (seeded `mulberry32`). It prints two tables. Expected output (measured on
+this machine; the allocation and array columns are machine-independent, the time varies):
 
 ```
-### Yoğun senaryo (frames=3600, burstEvery=6, burstCount=60, seed=42)
-| Metrik                     | Havuzsuz | Havuzlu |
-| Üretilen nesne             |   36,000 |      347 |
-| Kare başına dizi ayırması  |    3,600 |        0 |
-| Süre (ms, medyan/5 koşu)   |     ~8   |     ~5   |
-| Hayatta kalan (survived)   |      279 |      279 |
+### Heavy scenario (frames=3600, burstEvery=6, burstCount=60, seed=42)
+| Metric                     | Unpooled |  Pooled |
+| Objects created            |   36,000 |      347 |
+| Array allocs (per frame)   |    3,600 |        0 |
+| Time (ms, median/5 runs)   |     ~8   |     ~5   |
+| Survived (final count)     |      279 |      279 |
 
-### Hafif senaryo (frames=600, burstEvery=60, burstCount=8, seed=42)
-| Metrik                     | Havuzsuz | Havuzlu |
-| Üretilen nesne             |       80 |        8 |
-| Kare başına dizi ayırması  |      600 |        0 |
-| Süre (ms, medyan/5 koşu)   |    ~0.02 |    ~0.01 |
-| Hayatta kalan (survived)   |        0 |        0 |
+### Light scenario (frames=600, burstEvery=60, burstCount=8, seed=42)
+| Metric                     | Unpooled |  Pooled |
+| Objects created            |       80 |        8 |
+| Array allocs (per frame)   |      600 |        0 |
+| Time (ms, median/5 runs)   |    ~0.02 |    ~0.01 |
+| Survived (final count)     |        0 |        0 |
 ```
 
-- **Üretilen nesne** deterministiktir: havuzsuz `frames/burstEvery × burstCount`
-  (36.000 ve 80); havuzlu yalnızca yüksek su seviyesi kadar (347 ve 8), sonra sabit.
-- **survived** iki sürümde birebir eşittir — aynı parçacıklar, adil karşılaştırma.
-- **Süre** makineye göre oynar. Yoğun senaryoda havuzlu belirgin daha hızlı; hafif
-  senaryoda fark ölçüm gürültüsünde kaybolur — orada havuz kazanç getirmez.
+- **Objects created** is deterministic: unpooled it is `frames/burstEvery × burstCount`
+  (36,000 and 80); pooled it is only the high-water mark (347 and 8), then constant.
+- **survived** is identical in both versions — the same particles, a fair comparison.
+- **Time** varies by machine. In the heavy scenario the pooled version is clearly faster; in
+  the light scenario the difference disappears into measurement noise — the pool buys nothing there.
 
-## Görsel demo
+## Visual demo
 
 ```bash
 npm run dev
 ```
 
-`http://localhost:5173/` → canvas'ta sürekli parçacık patlaması. Sağ üstteki düğmeyle
-**Havuzlu / Havuzsuz** modu arasında geçiş yap, sol üstte canlı ayırma sayacını ve FPS'i
-izle. Testere dişini (sawtooth) görmek için Chrome DevTools → Performance ile kayıt al:
-havuzsuz modda JS Heap tırtıklanır, havuzlu modda düz çizgiye yakın kalır.
+`http://localhost:5173/` → a continuous particle burst on the canvas. Use the button in the
+top right to switch between **Pooled / Unpooled** mode, and watch the live allocation counter
+and the FPS in the top left. To see the sawtooth, record with Chrome DevTools → Performance:
+in unpooled mode the JS Heap is jagged, in pooled mode it stays close to a flat line.
 
 ## Build
 
@@ -92,8 +92,8 @@ havuzsuz modda JS Heap tırtıklanır, havuzlu modda düz çizgiye yakın kalır
 npm run build
 ```
 
-`tsc` (tip kontrolü) + `vite build` → `dist/`.
+`tsc` (type check) + `vite build` → `dist/`.
 
-## Lisans
+## License
 
 MIT

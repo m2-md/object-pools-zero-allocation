@@ -1,8 +1,8 @@
 import { benchBaseline, benchPooled } from "./bench";
 
-// Süre ölçümü gürültülüdür. Her sürümü birkaç kez koşup medyanı alırız;
-// böylece tek seferlik GC/JIT sıçramaları tabloyu yanıltmaz. Ayırma sayısı
-// deterministiktir, tek koşu yeter.
+// Timing is noisy. We run each version a few times and take the median, so a
+// one-off GC/JIT spike does not skew the table. The allocation count is
+// deterministic, so a single run is enough for it.
 function median(xs: number[]): number {
   const s = [...xs].sort((a, b) => a - b);
   const m = s.length >> 1;
@@ -38,40 +38,40 @@ function runScenario(sc: Scenario) {
     benchPooled(sc.frames, sc.burstEvery, sc.burstCount, sc.seed),
   );
 
-  const arrayAllocsBaseline = sc.frames; // filter → kare başına bir dizi
+  const arrayAllocsBaseline = sc.frames; // filter → one array per frame
 
   console.log(`\n### ${sc.title}`);
   console.log(
     `(frames=${sc.frames}, burstEvery=${sc.burstEvery}, ` +
       `burstCount=${sc.burstCount}, seed=${sc.seed})\n`,
   );
-  console.log("| Metrik                     | Havuzsuz | Havuzlu |");
+  console.log("| Metric                     | Unpooled |  Pooled |");
   console.log("|----------------------------|----------|---------|");
   console.log(
-    `| Üretilen nesne             | ${pad(fmt(base.allocations))} | ${pad(
+    `| Objects created            | ${pad(fmt(base.allocations))} | ${pad(
       fmt(pooled.allocations),
     )} |`,
   );
   console.log(
-    `| Kare başına dizi ayırması  | ${pad(fmt(arrayAllocsBaseline))} | ${pad(
+    `| Array allocs (per frame)   | ${pad(fmt(arrayAllocsBaseline))} | ${pad(
       "0",
     )} |`,
   );
   console.log(
-    `| Süre (ms, medyan/${5} koşu)   | ${pad(baseMs.toFixed(2))} | ${pad(
+    `| Time (ms, median/${5} runs)   | ${pad(baseMs.toFixed(2))} | ${pad(
       pooledMs.toFixed(2),
     )} |`,
   );
   console.log(
-    `| Hayatta kalan (survived)   | ${pad(fmt(base.survived))} | ${pad(
+    `| Survived (final count)     | ${pad(fmt(base.survived))} | ${pad(
       fmt(pooled.survived),
     )} |`,
   );
 
   if (base.survived !== pooled.survived) {
     throw new Error(
-      `survived uyuşmuyor: baseline=${base.survived} pooled=${pooled.survived}` +
-        " — karşılaştırma adil değil!",
+      `survived mismatch: baseline=${base.survived} pooled=${pooled.survived}` +
+        " — the comparison is not fair!",
     );
   }
 }
@@ -85,7 +85,7 @@ console.log("  Object Pool Benchmark — pooled vs unpooled particles");
 console.log("=".repeat(56));
 
 runScenario({
-  title: "Yoğun senaryo",
+  title: "Heavy scenario",
   frames: 3600,
   burstEvery: 6,
   burstCount: 60,
@@ -93,7 +93,7 @@ runScenario({
 });
 
 runScenario({
-  title: "Hafif senaryo (havuz gereksiz)",
+  title: "Light scenario (pooling unnecessary)",
   frames: 600,
   burstEvery: 60,
   burstCount: 8,
@@ -101,11 +101,11 @@ runScenario({
 });
 
 console.log(
-  "\nNot: 'Üretilen nesne' ve 'dizi ayırması' deterministiktir (makineden bağımsız).",
+  "\nNote: 'Objects created' and 'array allocs' are deterministic (machine-independent).",
 );
 console.log(
-  "     'Süre' makineye göre oynar; yön korunur: havuzlu ≤ havuzsuz eğilimi.",
+  "      'Time' varies by machine; the direction holds: pooled ≤ unpooled.",
 );
 console.log(
-  "     Hafif senaryoda fark gürültüde kaybolur — havuz orada kazanç getirmez.\n",
+  "      In the light scenario the gap vanishes into noise — pooling buys nothing there.\n",
 );

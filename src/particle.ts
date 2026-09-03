@@ -21,7 +21,7 @@ export function spawn(x: number, y: number, count: number, rng: () => number) {
       vy: Math.sin(a) * speed,
       life,
       max: life,
-    }); // her çağrı: heap'te yeni bir nesne
+    }); // every call: a brand new object on the heap
   }
 }
 
@@ -32,5 +32,5 @@ export function update(dt: number) {
     p.y += p.vy * dt;
     p.vy += 220 * dt;
   }
-  particles = particles.filter((p) => p.life > 0); // her kare: yepyeni bir dizi
+  particles = particles.filter((p) => p.life > 0); // every frame: a brand new array
 }

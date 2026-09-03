@@ -1,8 +1,8 @@
-// Görsel demo: aynı parçacık sahnesini iki modda koşar.
-//   - "Havuzlu"  → ParticleSystem (acquire/release, sıfır ayırma)
-//   - "Havuzsuz" → particle.ts'in modül seviyeli spawn/update deseni (push + filter)
-// Aynı görsel çıktı, farklı bellek profili. DevTools → Performance açıp
-// JS Heap grafiğini izleyin: havuzsuz modda testere dişi, havuzlu modda düz çizgi.
+// Visual demo: runs the same particle scene in two modes.
+//   - "Pooled"   → ParticleSystem (acquire/release, zero allocation)
+//   - "Unpooled" → the module-level spawn/update pattern from particle.ts (push + filter)
+// Same visual output, different memory profile. Open DevTools → Performance and
+// watch the JS Heap graph: a sawtooth in unpooled mode, a flat line in pooled mode.
 import { ParticleSystem } from "./particle-system";
 import { makeRng } from "./rng";
 
@@ -21,11 +21,11 @@ window.addEventListener("resize", resize);
 let pooled = true;
 const rng = makeRng(1337);
 
-// Havuzlu yol: tek bir sistem, kareler boyunca yeniden kullanılır.
+// The pooled path: a single system, reused across frames.
 const sys = new ParticleSystem(512);
 
-// Havuzsuz yol: her karede push({...}) + filter (particle.ts'in aynı deseni,
-// ama sayaç görebilmek için burada yerel tutulur).
+// The unpooled path: push({...}) + filter every frame (the same pattern as
+// particle.ts, kept local here so we can show a counter).
 interface P {
   x: number;
   y: number;
@@ -76,7 +76,7 @@ canvas.addEventListener("pointerdown", (e) => emitAt(e.clientX, e.clientY));
 
 toggle.addEventListener("click", () => {
   pooled = !pooled;
-  toggle.textContent = `Mod: ${pooled ? "Havuzlu" : "Havuzsuz"}`;
+  toggle.textContent = `Mode: ${pooled ? "Pooled" : "Unpooled"}`;
 });
 
 let last = performance.now();
@@ -88,7 +88,7 @@ function frame(now: number) {
   last = now;
   fps = fps * 0.9 + (1 / (dt || 1e-3)) * 0.1;
 
-  // Sürekli çöp baskısı için her ~0.1 sn ekranın ortasında patlat.
+  // Keep the garbage pressure constant: burst at screen center every ~0.1 s.
   autoTimer += dt;
   if (autoTimer > 0.1) {
     autoTimer = 0;
@@ -105,8 +105,8 @@ function frame(now: number) {
   let active: number;
   let allocations: number;
   if (pooled) {
-    // Havuzlu parçacıkları, havuzsuz yolla BİREBİR aynı şekilde çiz.
-    // Aynı görsel çıktı, farklı bellek profili — demonun tüm fikri bu.
+    // Draw the pooled particles EXACTLY the way the unpooled path draws them.
+    // Same visual output, different memory profile — that is the whole point of the demo.
     const ps = sys.particles;
     for (let i = 0; i < ps.length; i++) {
       const p = ps[i];
@@ -128,10 +128,10 @@ function frame(now: number) {
   }
 
   hud.innerHTML =
-    `Mod: <b>${pooled ? "Havuzlu" : "Havuzsuz"}</b><br>` +
+    `Mode: <b>${pooled ? "Pooled" : "Unpooled"}</b><br>` +
     `FPS: ${fps.toFixed(0)}<br>` +
-    `Aktif parçacık: ${active}<br>` +
-    `Toplam ayırma: <b>${allocations.toLocaleString("en-US")}</b>`;
+    `Active particles: ${active}<br>` +
+    `Total allocations: <b>${allocations.toLocaleString("en-US")}</b>`;
 
   requestAnimationFrame(frame);
 }

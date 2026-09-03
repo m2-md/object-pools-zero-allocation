@@ -1,7 +1,7 @@
 {
   "name": "object-pools-zero-allocation",
   "version": "1.0.0",
-  "description": "Canvas'ta nesne havuzları ve sıfır-ayırmalı oyun döngüsü — Pool<T>, havuzlu parçacık sistemi, in-place vektörler ve pooled vs unpooled benchmark",
+  "description": "Eliminating garbage collection pauses in HTML5 Canvas games: generic Pool<T>, in-place vector arithmetic, preallocated particle arrays, and pooled vs unpooled benchmarks.",
   "type": "module",
   "license": "MIT",
   "scripts": {

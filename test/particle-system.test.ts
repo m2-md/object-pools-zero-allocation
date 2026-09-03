@@ -3,18 +3,18 @@ import { ParticleSystem } from "../src/particle-system";
 import { makeRng } from "../src/rng";
 
 describe("ParticleSystem", () => {
-  it("ölen parçacığı havuza iade eder ve yeniden kullanır", () => {
+  it("returns a dead particle to the pool and reuses it", () => {
     const sys = new ParticleSystem(0);
     const rng = makeRng(1);
 
     sys.burst(0, 0, 10, rng);
     expect(sys.activeCount).toBe(10);
-    expect(sys.allocations).toBe(10); // ilk 10 gerçekten üretildi
+    expect(sys.allocations).toBe(10); // the first 10 really were created
 
-    sys.update(100); // dev bir dt: hepsinin life'ı sıfırın altına iner
-    expect(sys.activeCount).toBe(0); // hepsi havuza döndü
+    sys.update(100); // a huge dt: every particle's life drops below zero
+    expect(sys.activeCount).toBe(0); // all of them went back to the pool
 
     sys.burst(0, 0, 10, rng);
-    expect(sys.allocations).toBe(10); // hâlâ 10: yeni ayırma YOK, raftan geldi
+    expect(sys.allocations).toBe(10); // still 10: NO new allocation, they came off the shelf
   });
 });

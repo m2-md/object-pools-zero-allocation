@@ -16,31 +16,31 @@ function makePool(initial = 0) {
 }
 
 describe("Pool", () => {
-  it("art arda acquire farklı nesneler verir", () => {
+  it("hands out a different object on each consecutive acquire", () => {
     const pool = makePool();
     const a = pool.acquire();
     const b = pool.acquire();
-    expect(a).not.toBe(b); // asla aynı bardağı iki kişiye verme
+    expect(a).not.toBe(b); // never hand the same glass to two people
   });
 
-  it("release edilen nesne bir sonraki acquire'da geri gelir", () => {
+  it("returns a released object on the next acquire", () => {
     const pool = makePool();
     const a = pool.acquire();
     pool.release(a);
     const b = pool.acquire();
-    expect(b).toBe(a); // aynı nesne, rafa dönüp tekrar dağıtıldı
+    expect(b).toBe(a); // same object, back on the shelf and handed out again
   });
 
-  it("release nesneyi sıfırlar (hayalet yok)", () => {
+  it("resets an object on release (no leftover state)", () => {
     const pool = makePool();
     const a = pool.acquire();
     a.value = 42;
     pool.release(a);
     const b = pool.acquire();
-    expect(b.value).toBe(0); // dibinde eski içecek kalmadı
+    expect(b.value).toBe(0); // no old drink left at the bottom
   });
 
-  it("yüksek su seviyesine kadar büyür, sonra üretmeyi durdurur", () => {
+  it("grows up to the high-water mark, then stops creating", () => {
     const pool = makePool();
     const a = pool.acquire();
     const b = pool.acquire();
@@ -51,10 +51,10 @@ describe("Pool", () => {
     pool.release(b);
     pool.release(c);
 
-    // üçünü geri al: hepsi raftan gelmeli, yeni üretim olmamalı
+    // take all three back: they must all come off the shelf, with no new creation
     pool.acquire();
     pool.acquire();
     pool.acquire();
-    expect(pool.created).toBe(3); // su seviyesi sabit
+    expect(pool.created).toBe(3); // the water level stays put
   });
 });

@@ -3,9 +3,9 @@ import { ParticleSystem } from "./particle-system";
 import type { Particle } from "./particle";
 
 export interface BenchResult {
-  allocations: number; // üretilen Particle nesnesi sayısı
-  ms: number; // toplam süre
-  survived: number; // sonda hayatta kalan
+  allocations: number; // number of Particle objects created
+  ms: number; // total time
+  survived: number; // how many are still alive at the end
 }
 
 export function benchBaseline(
@@ -43,7 +43,7 @@ export function benchBaseline(
       p.y += p.vy * dt;
       p.vy += 220 * dt;
     }
-    particles = particles.filter((p) => p.life > 0); // + kare başına bir dizi
+    particles = particles.filter((p) => p.life > 0); // + one array per frame
   }
 
   return {

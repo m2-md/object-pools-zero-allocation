@@ -3,7 +3,7 @@ import type { Particle } from "./particle";
 
 export class ParticleSystem {
   private pool: Pool<Particle>;
-  private active: Particle[] = []; // sahnedeki canlı parçacıklar
+  private active: Particle[] = []; // the live particles on screen
 
   constructor(initial = 256) {
     this.pool = new Pool<Particle>({
@@ -22,7 +22,7 @@ export class ParticleSystem {
 
   burst(x: number, y: number, count: number, rng: () => number) {
     for (let i = 0; i < count; i++) {
-      const p = this.pool.acquire(); // yeni değil: raftan
+      const p = this.pool.acquire(); // not new: taken off the shelf
       const a = rng() * Math.PI * 2;
       const speed = 40 + rng() * 150;
       const life = 0.3 + rng() * 0.4;
@@ -37,7 +37,7 @@ export class ParticleSystem {
   }
 
   update(dt: number) {
-    // filter YOK. Ölüyü bulunca havuza iade et, yerine sondakini taşı.
+    // No filter. When one dies, return it to the pool and move the last one into its slot.
     for (let i = this.active.length - 1; i >= 0; i--) {
       const p = this.active[i];
       p.life -= dt;
@@ -46,7 +46,7 @@ export class ParticleSystem {
       p.vy += 220 * dt;
 
       if (p.life <= 0) {
-        this.pool.release(p); // bardağı iade et
+        this.pool.release(p); // give the glass back
         this.active[i] = this.active[this.active.length - 1]; // swap-remove
         this.active.pop();
       }
@@ -57,7 +57,7 @@ export class ParticleSystem {
     return this.active.length;
   }
 
-  // Çizim için canlı parçacıkları gez — kopya/yeni dizi üretmeden (sıfır ayırma).
+  // Walk the live particles for drawing — without a copy or a new array (zero allocation).
   get particles(): readonly Particle[] {
     return this.active;
   }
