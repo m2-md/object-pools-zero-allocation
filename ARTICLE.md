@@ -1,4 +1,3 @@
-
 # Çöpü Değil, Bardağı Geri Ver: Canvas'ta Nesne Havuzları ve Sıfır-Ayırmalı Oyun Döngüsü
 
 *Her karede parçacık üretip çöpe atan desenimizin GC duraklamalarını önce ölçüyoruz, sonra bir object pool ile yok ediyoruz — ve "ne zaman gereksiz" olduğunu da benchmark'la gösteriyoruz.*
