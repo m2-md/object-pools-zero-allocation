@@ -4,6 +4,8 @@
 **▶ [Live demo](https://m2-md.github.io/object-pools-zero-allocation/)** · [Source](https://github.com/m2-md/object-pools-zero-allocation)
 <!-- LINKS:END -->
 
+> Eliminating garbage collection pauses in HTML5 Canvas games: generic Pool<T>, in-place vector arithmetic, preallocated particle arrays, and pooled vs unpooled benchmarks.
+
 Working code for the article "Give Back the Glass, Not the Garbage: Object Pools and a
 Zero-Allocation Game Loop in Canvas". It takes the particle pattern that produces garbage
 every frame with `push({...})` + `filter` and makes it zero-allocation with a `Pool<T>` —
@@ -89,6 +91,9 @@ npm run dev
 top right to switch between **Pooled / Unpooled** mode, and watch the live allocation counter
 and the FPS in the top left. To see the sawtooth, record with Chrome DevTools → Performance:
 in unpooled mode the JS Heap is jagged, in pooled mode it stays close to a flat line.
+
+> Do not open `index.html` with `file://` — the ES modules will not resolve and you
+> will get a blank screen. The Vite dev server is required.
 
 ## Build
 
